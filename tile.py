@@ -76,16 +76,3 @@ class Tile:
         """Restore the tile to its original position and orientation."""
         self.__current_image = self.__original_image.copy()
         self.__current_position = self.__correct_position
-        
-if __name__ == "__main__":
-    test_image = np.zeros((100, 100, 3), dtype=np.uint8)
-
-    tile = Tile(test_image, 0)
-
-    print("Initially correct:", tile.is_correct())
-
-    tile.set_current_position(1)
-    print("After moving:", tile.is_correct())
-
-    tile.reset()
-    print("After reset:", tile.is_correct())
