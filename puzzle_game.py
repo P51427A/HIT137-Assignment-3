@@ -11,7 +11,7 @@ CANVAS_SIZE = 450
 GRID_COLOUR = "#777777"
 SELECTION_COLOUR = "#c2410c"
 HINT_COLOUR = "#0057b8"
-CORRECT_COLOUR = "#087830"
+CORRECT_COLOUR = "#00ff00"
 
 BACKGROUND_COLOUR = "#edf2f7"
 HEADER_COLOUR = "#17324d"
@@ -553,7 +553,7 @@ class PuzzleGame(tk.Frame):
                     right_x - 7,
                     top_y + 7,
                     fill=CORRECT_COLOUR,
-                    width=4
+                    width=5
                 )
 
     def __draw_selection(self, image_width, image_height):
