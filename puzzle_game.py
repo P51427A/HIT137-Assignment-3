@@ -9,9 +9,21 @@ from puzzle import Puzzle
 
 CANVAS_SIZE = 450
 GRID_COLOUR = "#777777"
-SELECTION_COLOUR = "#ff6600"
-HINT_COLOUR = "#0066ff"
-CORRECT_COLOUR = "#00a000"
+SELECTION_COLOUR = "#c2410c"
+HINT_COLOUR = "#0057b8"
+CORRECT_COLOUR = "#087830"
+
+BACKGROUND_COLOUR = "#edf2f7"
+HEADER_COLOUR = "#17324d"
+PANEL_COLOUR = "#ffffff"
+TEXT_COLOUR = "#17212b"
+SECONDARY_TEXT_COLOUR = "#425466"
+LOAD_BUTTON_COLOUR = "#1f5f99"
+HINT_BUTTON_COLOUR = "#a85d00"
+SOLVE_BUTTON_COLOUR = "#176b3a"
+RESHUFFLE_BUTTON_COLOUR = "#5c3d8f"
+CLEAR_BUTTON_COLOUR = "#6b4f54"
+DISABLED_BUTTON_COLOUR = "#9aa6b2"
 
 
 class PuzzleGame(tk.Frame):
@@ -19,9 +31,10 @@ class PuzzleGame(tk.Frame):
 
     def __init__(self, master):
         """Create the puzzle application interface."""
-        super().__init__(master)
+        super().__init__(master, background=BACKGROUND_COLOUR)
 
         self.__puzzle = None
+        self.__current_file_path = None
         self.__active_grid_size = 3
         self.__selected_position = None
         self.__hint_positions = None
@@ -30,43 +43,96 @@ class PuzzleGame(tk.Frame):
         self.__puzzle_photo = None
 
         self.__grid_variable = tk.IntVar(value=3)
-        self.__moves_variable = tk.StringVar(value="Moves: 0")
+        self.__moves_variable = tk.StringVar(value="Moves: -")
         self.__incorrect_variable = tk.StringVar(
-            value="Tiles remaining: 0"
+            value="Tiles remaining: -"
         )
         self.__hints_variable = tk.StringVar(
-            value="Hints remaining: 3"
+            value="Hints remaining: -"
+        )
+        self.__message_variable = tk.StringVar(
+            value="Choose a grid size and load an image to begin."
         )
 
         self.__create_widgets()
         self.__bind_events()
+        self.__update_buttons()
 
     def __create_widgets(self):
         """Create and arrange all interface widgets."""
-        title_label = tk.Label(
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+
+        header_frame = tk.Frame(
             self,
-            text="Image Tile Puzzle",
-            font=("Arial", 22, "bold")
+            background=HEADER_COLOUR
+        )
+        header_frame.grid(
+            row=0,
+            column=0,
+            columnspan=2,
+            sticky="ew"
+        )
+        header_frame.grid_columnconfigure(0, weight=1)
+
+        title_label = tk.Label(
+            header_frame,
+            text="HIT137 Image Tile Puzzle Game",
+            font=("Arial", 20, "bold"),
+            background=HEADER_COLOUR,
+            foreground="white"
         )
         title_label.grid(
             row=0,
             column=0,
-            columnspan=2,
-            pady=(10, 5)
+            pady=(5, 0)
         )
 
-        controls_frame = tk.Frame(self)
+        subtitle_label = tk.Label(
+            header_frame,
+            text="Restore the image by swapping, rotating and flipping tiles",
+            font=("Arial", 10),
+            background=HEADER_COLOUR,
+            foreground="#d9e7f3"
+        )
+        subtitle_label.grid(row=1, column=0, pady=(0, 5))
+
+        message_label = tk.Label(
+            header_frame,
+            textvariable=self.__message_variable,
+            font=("Arial", 9, "bold"),
+            background=HEADER_COLOUR,
+            foreground="#f4d06f",
+            anchor="center",
+            justify=tk.CENTER
+        )
+        message_label.grid(
+            row=2,
+            column=0,
+            pady=(0, 5)
+        )
+
+        controls_frame = tk.Frame(
+            self,
+            background=PANEL_COLOUR,
+            highlightthickness=1,
+            highlightbackground="#c3ced8"
+        )
         controls_frame.grid(
             row=1,
             column=0,
             columnspan=2,
-            pady=8
+            pady=6,
+            ipadx=12,
+            ipady=5
         )
 
         grid_label = tk.Label(
             controls_frame,
-            text="Grid size:",
-            font=("Arial", 11)
+            text="Grid size",
+            font=("Arial", 10, "bold"),
+            background=PANEL_COLOUR,
+            foreground=TEXT_COLOUR
         )
         grid_label.pack(side=tk.LEFT, padx=5)
 
@@ -77,121 +143,248 @@ class PuzzleGame(tk.Frame):
             4,
             5
         )
-        self.__grid_menu.config(width=5)
+        self.__grid_menu.config(
+            width=4,
+            font=("Arial", 10, "bold"),
+            background="#f4f7fa",
+            activebackground="#e3ebf2",
+            relief=tk.GROOVE
+        )
         self.__grid_menu.pack(side=tk.LEFT, padx=5)
 
         load_button = tk.Button(
             controls_frame,
             text="Load Image",
             width=12,
+            font=("Arial", 10, "bold"),
+            background=LOAD_BUTTON_COLOUR,
+            foreground="white",
+            activebackground="#184b78",
+            activeforeground="white",
+            relief=tk.FLAT,
+            cursor="hand2",
             command=self.__load_image
         )
-        load_button.pack(side=tk.LEFT, padx=5)
+        load_button.pack(side=tk.LEFT, padx=(10, 5), ipady=2)
+
+        self.__reshuffle_button = tk.Button(
+            controls_frame,
+            text="Reshuffle",
+            width=11,
+            font=("Arial", 10, "bold"),
+            background=RESHUFFLE_BUTTON_COLOUR,
+            foreground="white",
+            activebackground="#472f70",
+            activeforeground="white",
+            disabledforeground="#eef2f5",
+            relief=tk.FLAT,
+            cursor="hand2",
+            state=tk.DISABLED,
+            command=self.__reshuffle_puzzle
+        )
+        self.__reshuffle_button.pack(
+            side=tk.LEFT,
+            padx=5,
+            ipady=2
+        )
+
+        self.__clear_button = tk.Button(
+            controls_frame,
+            text="Clear Image",
+            width=11,
+            font=("Arial", 10, "bold"),
+            background=CLEAR_BUTTON_COLOUR,
+            foreground="white",
+            activebackground="#523c40",
+            activeforeground="white",
+            disabledforeground="#eef2f5",
+            relief=tk.FLAT,
+            cursor="hand2",
+            state=tk.DISABLED,
+            command=self.__clear_image
+        )
+        self.__clear_button.pack(side=tk.LEFT, padx=5, ipady=2)
+
+        divider = tk.Frame(
+            controls_frame,
+            background="#b7c4cf",
+            width=2,
+            height=30
+        )
+        divider.pack(side=tk.LEFT, padx=10)
+        divider.pack_propagate(False)
 
         self.__hint_button = tk.Button(
             controls_frame,
             text="Hint",
             width=10,
+            font=("Arial", 10, "bold"),
+            background=HINT_BUTTON_COLOUR,
+            foreground="white",
+            activebackground="#824800",
+            activeforeground="white",
+            disabledforeground="#eef2f5",
+            relief=tk.FLAT,
+            cursor="hand2",
             state=tk.DISABLED,
             command=self.__show_hint
         )
-        self.__hint_button.pack(side=tk.LEFT, padx=5)
+        self.__hint_button.pack(side=tk.LEFT, padx=5, ipady=2)
 
         self.__solve_button = tk.Button(
             controls_frame,
             text="Solve",
             width=10,
+            font=("Arial", 10, "bold"),
+            background=SOLVE_BUTTON_COLOUR,
+            foreground="white",
+            activebackground="#10522c",
+            activeforeground="white",
+            disabledforeground="#eef2f5",
+            relief=tk.FLAT,
+            cursor="hand2",
             state=tk.DISABLED,
             command=self.__solve_puzzle
         )
-        self.__solve_button.pack(side=tk.LEFT, padx=5)
+        self.__solve_button.pack(side=tk.LEFT, padx=5, ipady=2)
+
+        original_panel = tk.Frame(
+            self,
+            background=PANEL_COLOUR,
+            highlightthickness=1,
+            highlightbackground="#b7c4cf"
+        )
+        original_panel.grid(
+            row=2,
+            column=0,
+            padx=(18, 9),
+            pady=2
+        )
+
+        puzzle_panel = tk.Frame(
+            self,
+            background=PANEL_COLOUR,
+            highlightthickness=1,
+            highlightbackground="#b7c4cf"
+        )
+        puzzle_panel.grid(
+            row=2,
+            column=1,
+            padx=(9, 18),
+            pady=2
+        )
 
         original_label = tk.Label(
-            self,
+            original_panel,
             text="Original Image",
-            font=("Arial", 13, "bold")
+            font=("Arial", 13, "bold"),
+            background=PANEL_COLOUR,
+            foreground=TEXT_COLOUR
         )
-        original_label.grid(row=2, column=0, pady=5)
+        original_label.pack(pady=(4, 3))
 
         puzzle_label = tk.Label(
-            self,
+            puzzle_panel,
             text="Puzzle Image",
-            font=("Arial", 13, "bold")
+            font=("Arial", 13, "bold"),
+            background=PANEL_COLOUR,
+            foreground=TEXT_COLOUR
         )
-        puzzle_label.grid(row=2, column=1, pady=5)
+        puzzle_label.pack(pady=(4, 3))
 
         self.__original_canvas = tk.Canvas(
-            self,
+            original_panel,
             width=CANVAS_SIZE,
             height=CANVAS_SIZE,
-            background="#eeeeee",
-            highlightthickness=1,
-            highlightbackground="#999999"
+            background="#e2e8ee",
+            highlightthickness=2,
+            highlightbackground="#667788"
         )
-        self.__original_canvas.grid(
-            row=3,
-            column=0,
-            padx=12,
-            pady=5
-        )
+        self.__original_canvas.pack(padx=8, pady=(0, 6))
 
         self.__puzzle_canvas = tk.Canvas(
-            self,
+            puzzle_panel,
             width=CANVAS_SIZE,
             height=CANVAS_SIZE,
-            background="#eeeeee",
-            highlightthickness=1,
-            highlightbackground="#999999"
+            background="#e2e8ee",
+            highlightthickness=2,
+            highlightbackground="#667788",
+            cursor="hand2"
         )
-        self.__puzzle_canvas.grid(
-            row=3,
-            column=1,
-            padx=12,
-            pady=5
-        )
+        self.__puzzle_canvas.pack(padx=8, pady=(0, 6))
 
-        status_frame = tk.Frame(self)
+        status_frame = tk.Frame(
+            self,
+            background=PANEL_COLOUR,
+            highlightthickness=1,
+            highlightbackground="#c3ced8"
+        )
         status_frame.grid(
-            row=4,
+            row=3,
             column=0,
             columnspan=2,
-            pady=8
+            pady=(6, 3),
+            ipadx=8,
+            ipady=3
         )
 
         tk.Label(
             status_frame,
             textvariable=self.__moves_variable,
-            font=("Arial", 11, "bold")
+            font=("Arial", 11, "bold"),
+            background=PANEL_COLOUR,
+            foreground=TEXT_COLOUR
         ).pack(side=tk.LEFT, padx=20)
 
         tk.Label(
             status_frame,
             textvariable=self.__incorrect_variable,
-            font=("Arial", 11, "bold")
+            font=("Arial", 11, "bold"),
+            background=PANEL_COLOUR,
+            foreground=TEXT_COLOUR
         ).pack(side=tk.LEFT, padx=20)
 
         tk.Label(
             status_frame,
             textvariable=self.__hints_variable,
-            font=("Arial", 11, "bold")
+            font=("Arial", 11, "bold"),
+            background=PANEL_COLOUR,
+            foreground=TEXT_COLOUR
         ).pack(side=tk.LEFT, padx=20)
 
         instruction_text = (
-            "Left click: select and swap tiles   |   "
-            "Right click: rotate clockwise   |   "
-            "Shift + left click: flip horizontally"
+            "Left click: select or swap"
+            "\t\tRight click: rotate clockwise\t\t"
+            "Shift + left click: flip horizontally\n"
         )
 
         instruction_label = tk.Label(
             self,
             text=instruction_text,
-            font=("Arial", 10)
+            font=("Arial", 11),
+            background=BACKGROUND_COLOUR,
+            foreground="#283848",
+            justify=tk.CENTER
         )
         instruction_label.grid(
             row=5,
             column=0,
             columnspan=2,
-            pady=(3, 12)
+            pady=(1, 2)
+        )
+
+        footer_label = tk.Label(
+            self,
+            text="HIT137 Software Now  |  Assignment 3",
+            font=("Arial", 10, "bold"),
+            background=BACKGROUND_COLOUR,
+            foreground=SECONDARY_TEXT_COLOUR
+        )
+        footer_label.grid(
+            row=6,
+            column=0,
+            columnspan=2,
+            pady=(0, 4)
         )
 
     def __bind_events(self):
@@ -237,9 +430,13 @@ class PuzzleGame(tk.Frame):
             return
 
         self.__puzzle = new_puzzle
+        self.__current_file_path = file_path
         self.__active_grid_size = grid_size
         self.__selected_position = None
         self.__hint_positions = None
+        self.__message_variable.set(
+            "Puzzle loaded. Select a tile on the puzzle image."
+        )
 
         self.__update_display()
         self.__update_status()
@@ -489,9 +686,18 @@ class PuzzleGame(tk.Frame):
 
         if self.__selected_position is None:
             self.__selected_position = position
+            row = position // self.__active_grid_size + 1
+            column = position % self.__active_grid_size + 1
+            self.__message_variable.set(
+                "Selected tile: row " + str(row) +
+                ", column " + str(column) + "."
+            )
 
         elif self.__selected_position == position:
             self.__selected_position = None
+            self.__message_variable.set(
+                "Tile deselected. Select another tile."
+            )
 
         else:
             move_made = self.__puzzle.swap_tiles(
@@ -503,6 +709,9 @@ class PuzzleGame(tk.Frame):
 
             if move_made:
                 self.__hint_positions = None
+                self.__message_variable.set(
+                    "Tiles swapped. Select a tile for the next move."
+                )
                 self.__after_move()
 
                 return "break"
@@ -526,6 +735,9 @@ class PuzzleGame(tk.Frame):
             if move_made:
                 self.__selected_position = None
                 self.__hint_positions = None
+                self.__message_variable.set(
+                    "Tile rotated clockwise."
+                )
                 self.__after_move()
 
         return "break"
@@ -546,6 +758,9 @@ class PuzzleGame(tk.Frame):
             if move_made:
                 self.__selected_position = None
                 self.__hint_positions = None
+                self.__message_variable.set(
+                    "Tile flipped horizontally."
+                )
                 self.__after_move()
 
         return "break"
@@ -557,6 +772,9 @@ class PuzzleGame(tk.Frame):
         self.__update_buttons()
 
         if self.__puzzle.is_complete():
+            self.__message_variable.set(
+                "Puzzle complete. All tiles are in the correct position."
+            )
             messagebox.showinfo(
                 "Puzzle Complete",
                 "Congratulations! You restored the image."
@@ -568,6 +786,19 @@ class PuzzleGame(tk.Frame):
             return
 
         self.__hint_positions = self.__puzzle.request_hint()
+
+        if self.__hint_positions is not None:
+            current_position, correct_position = self.__hint_positions
+            current_row = current_position // self.__active_grid_size + 1
+            current_column = current_position % self.__active_grid_size + 1
+            correct_row = correct_position // self.__active_grid_size + 1
+            correct_column = correct_position % self.__active_grid_size + 1
+            self.__message_variable.set(
+                "Hint: puzzle tile at row " + str(current_row) +
+                ", column " + str(current_column) +
+                " belongs at row " + str(correct_row) +
+                ", column " + str(correct_column) + "."
+            )
 
         self.__update_display()
         self.__update_status()
@@ -581,6 +812,9 @@ class PuzzleGame(tk.Frame):
         self.__puzzle.solve()
         self.__selected_position = None
         self.__hint_positions = None
+        self.__message_variable.set(
+            "Puzzle solved. Load another image to play again."
+        )
 
         self.__update_display()
         self.__update_status()
@@ -590,6 +824,64 @@ class PuzzleGame(tk.Frame):
             "Puzzle Solved",
             "The puzzle has been restored."
         )
+
+    def __reshuffle_puzzle(self):
+        """Scramble the loaded image again and reset the round."""
+        if self.__puzzle is None:
+            return
+
+        grid_size = self.__grid_variable.get()
+
+        if grid_size != self.__active_grid_size:
+            new_puzzle = Puzzle(grid_size)
+
+            try:
+                new_puzzle.load_image(self.__current_file_path)
+            except ValueError as error:
+                messagebox.showerror(
+                    "Image Error",
+                    str(error)
+                )
+                return
+
+            self.__puzzle = new_puzzle
+            self.__active_grid_size = grid_size
+        else:
+            if not self.__puzzle.reshuffle():
+                return
+
+        self.__selected_position = None
+        self.__hint_positions = None
+        self.__message_variable.set(
+            "Image reshuffled as a " + str(grid_size) +
+            " x " + str(grid_size) +
+            " grid. Moves and hints have been reset."
+        )
+
+        self.__update_display()
+        self.__update_status()
+        self.__update_buttons()
+
+    def __clear_image(self):
+        """Clear the loaded image and return to the initial state."""
+        self.__puzzle = None
+        self.__current_file_path = None
+        self.__selected_position = None
+        self.__hint_positions = None
+        self.__original_photo = None
+        self.__puzzle_photo = None
+
+        self.__original_canvas.delete("all")
+        self.__puzzle_canvas.delete("all")
+
+        self.__moves_variable.set("Moves: -")
+        self.__incorrect_variable.set("Tiles remaining: -")
+        self.__hints_variable.set("Hints remaining: -")
+        self.__message_variable.set(
+            "Choose a grid size and load an image to begin."
+        )
+
+        self.__update_buttons()
 
     def __update_status(self):
         """Update moves, incorrect tiles and hints."""
@@ -611,18 +903,48 @@ class PuzzleGame(tk.Frame):
         )
 
     def __update_buttons(self):
-        """Enable or disable Hint and Solve appropriately."""
-        if (
-            self.__puzzle is None or
-            self.__puzzle.is_complete()
-        ):
+        """Enable or disable the puzzle buttons appropriately."""
+        if self.__puzzle is None:
             self.__hint_button.config(state=tk.DISABLED)
             self.__solve_button.config(state=tk.DISABLED)
+            self.__reshuffle_button.config(state=tk.DISABLED)
+            self.__clear_button.config(state=tk.DISABLED)
+            self.__hint_button.config(background=DISABLED_BUTTON_COLOUR)
+            self.__solve_button.config(background=DISABLED_BUTTON_COLOUR)
+            self.__reshuffle_button.config(
+                background=DISABLED_BUTTON_COLOUR
+            )
+            self.__clear_button.config(
+                background=DISABLED_BUTTON_COLOUR
+            )
+            return
+
+        self.__reshuffle_button.config(
+            state=tk.NORMAL,
+            background=RESHUFFLE_BUTTON_COLOUR
+        )
+        self.__clear_button.config(
+            state=tk.NORMAL,
+            background=CLEAR_BUTTON_COLOUR
+        )
+
+        if self.__puzzle.is_complete():
+            self.__hint_button.config(
+                state=tk.DISABLED,
+                background=DISABLED_BUTTON_COLOUR
+            )
+            self.__solve_button.config(
+                state=tk.DISABLED,
+                background=DISABLED_BUTTON_COLOUR
+            )
             return
 
         self.__solve_button.config(state=tk.NORMAL)
+        self.__solve_button.config(background=SOLVE_BUTTON_COLOUR)
 
         if self.__puzzle.get_hints_remaining() > 0:
             self.__hint_button.config(state=tk.NORMAL)
+            self.__hint_button.config(background=HINT_BUTTON_COLOUR)
         else:
             self.__hint_button.config(state=tk.DISABLED)
+            self.__hint_button.config(background=DISABLED_BUTTON_COLOUR)

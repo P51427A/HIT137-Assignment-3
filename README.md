@@ -1,10 +1,10 @@
-# HIT137 Assignment 3 – Image Tile Puzzle
+# HIT137 Assignment 3 – Image Tile Puzzle Game
 
 ## Overview
 
-This project is a desktop image puzzle developed for HIT137 Software Now. It demonstrates object-oriented programming, Tkinter GUI development and image processing with OpenCV.
+This project is an image tile puzzle created for HIT137 Software Now using Python, Tkinter and OpenCV.
 
-The application loads an image, resizes and pads it, divides it into tiles and applies randomly generated swap, rotation and flip transformations. The player must restore the image using mouse controls.
+The program loads an image, resizes it and divides it into tiles. The tiles are then randomly swapped, rotated or flipped. The aim is to restore the original image using the mouse controls.
 
 ## Group Members
 
@@ -15,22 +15,20 @@ The application loads an image, resizes and pads it, divides it into tiles and a
 | Milan Bhattarai | S403198 |
 | Nischal Malla | S401733 |
 
-
 ## Features
 
 - Supports JPG, JPEG, PNG and BMP images
-- 3×3, 4×4 and 5×5 grid options
-- Original and transformed images displayed side by side
-- Random swap, rotation and flip transformations
-- Transformation count increases with grid size
-- No tile is targeted twice during initial scrambling
-- Move and incorrect-tile counters
-- Green ticks for correctly restored tiles
-- Coloured border for the selected tile
-- Maximum of three hints per image
-- Solve button for instantly restoring the image
-- Automatic completion detection and input locking
-- Error handling for cancelled dialogs and invalid files
+- Includes 3×3, 4×4 and 5×5 grid sizes
+- Displays the original and puzzle images side by side
+- Randomly swaps, rotates and flips tiles
+- Uses more transformations for larger grids
+- Prevents the same tile from being targeted twice during scrambling
+- Counts the number of moves and incorrect tiles
+- Shows a green tick on correctly restored tiles
+- Provides up to three hints for each puzzle
+- Includes Solve, Reshuffle and Clear Image buttons
+- Detects when the puzzle has been completed
+- Handles cancelled selections and invalid image files
 
 ## Controls
 
@@ -38,95 +36,59 @@ The application loads an image, resizes and pads it, divides it into tiles and a
 |---|---|
 | Select a tile | Left click |
 | Deselect a tile | Left click the selected tile again |
-| Swap tiles | Left click two different tiles |
-| Rotate clockwise | Right click |
-| Flip horizontally | Shift + left click |
-| Display a hint | Hint button |
-| Restore the puzzle | Solve button |
+| Swap two tiles | Left click two different tiles |
+| Rotate a tile clockwise | Right click |
+| Flip a tile horizontally | Shift + left click |
+| Show a hint | Hint button |
+| Restore the full image | Solve button |
+| Scramble the loaded image again | Reshuffle button |
+| Remove the image from the program | Clear Image button |
 
-Each swap, rotation or flip counts as one move.
+A swap, rotation or flip counts as one move.
 
 ## Installation
 
-Install the required Python packages:
+Install the required packages:
 
-`pip install -r requirements.txt`
+```bash
+pip install -r requirements.txt
+```
 
-## Running the Application
+## Running the Program
 
-Run the program from the project directory:
+Run the following command from the project folder:
 
-`python main.py`
+```bash
+python main.py
+```
 
-Choose the grid size before loading an image.
+Choose a grid size and then click **Load Image** to begin.
 
-## Project Structure
+## Project Files
 
 | File | Purpose |
 |---|---|
-| `main.py` | Starts the Tkinter application |
-| `puzzle_game.py` | Provides the GUI and mouse interactions |
-| `puzzle.py` | Manages puzzle state, moves, hints and completion |
-| `image_processor.py` | Loads, resizes, pads, divides and reassembles images |
-| `tile.py` | Represents an individual puzzle tile |
-| `transformations.py` | Contains swap, rotation and flip classes |
+| `main.py` | Starts the application |
+| `puzzle_game.py` | Contains the Tkinter interface and mouse controls |
+| `puzzle.py` | Manages the puzzle, moves, hints and completion |
+| `image_processor.py` | Loads, resizes, pads and divides images |
+| `tile.py` | Represents each image tile |
+| `transformations.py` | Contains the swap, rotate and flip transformations |
 | `requirements.txt` | Lists the required packages |
-| `github_link.txt` | Contains the public GitHub repository link |
-| `test_component.py` | Tests image processing and transformations |
-| `test_puzzle.py` | Tests puzzle logic at all three grid sizes |
+| `github_link.txt` | Contains the GitHub repository link |
+| `test_component.py` | Tests the image-processing components |
+| `test_puzzle.py` | Tests the puzzle using all three grid sizes |
 
-## Object-Oriented Design
+## How It Works
 
-### Encapsulation
+The program uses separate classes for the interface, puzzle logic, image processing, tiles and transformations. The swap, rotate and flip classes share a parent transformation class and each has its own `apply()` method.
 
-The `Tile` and `Puzzle` classes use private attributes and provide methods for controlled access and modification.
+OpenCV prepares the selected image at upto 450×450 image while keeping its original aspect ratio. Padding is added when needed so the image can be divided evenly into 3×3, 4×4 or 5×5 tiles.
 
-### Inheritance
+## Testing
 
-`SwapTransformation`, `RotateTransformation` and `FlipTransformation` inherit from the parent `Transformation` class.
-
-### Polymorphism
-
-Each transformation class overrides the `apply()` method. Different transformation objects can therefore be stored together and processed using the same method call.
-
-### Class Interaction
-
-The GUI communicates with the `Puzzle` class, which uses `ImageProcessor`, `Tile` and the transformation classes to manage the game.
-
-## Image Processing
-
-OpenCV is used to:
-
-- Load images from disk
-- Resize images while preserving aspect ratio
-- Pad images to create evenly divisible square grids
-- Divide images using pixel-array slicing
-- Rotate and flip tiles
-- Reassemble tiles into one displayed image
-
-The prepared image sizes are:
-
-| Grid | Image size | Tile size |
-|---|---:|---:|
-| 3×3 | 450×450 | 150×150 |
-| 4×4 | 448×448 | 112×112 |
-| 5×5 | 450×450 | 90×90 |
-
-## Testing Checklist
-
-The application should be tested using:
-
-- All three grid sizes
-- JPG, PNG and BMP images
-- Cancelled file selection
-- Invalid and non-image files
-- Tile selection and deselection
-- Swapping, rotation and flipping
-- Three-hint enforcement
-- Solve functionality
-- Manual puzzle completion
-- Loading a new image after completing a round
+The program was tested with all three grid sizes and with JPG, PNG and BMP images. The mouse controls, hints, counters, Solve, Reshuffle, Clear Image and puzzle-completion features were also tested.
 
 ## Repository
 
-The public GitHub repository URL is provided in `github_link.txt`.
+The public GitHub repository link is included in `github_link.txt`.

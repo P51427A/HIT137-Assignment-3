@@ -47,3 +47,4 @@ class FlipTransformation(Transformation):
     def apply(self):
         """Flip the selected tile."""
         self.__tile.flip(self.__direction)
+        

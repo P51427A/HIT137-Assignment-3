@@ -242,6 +242,21 @@ class Puzzle:
         self.__moves = 0
         self.__complete = True
 
+    def reshuffle(self):
+        """Reset and scramble the currently loaded image again."""
+        if len(self.__tiles) == 0:
+            return False
+
+        for tile in self.__tiles:
+            tile.reset()
+
+        self.__moves = 0
+        self.__hints_used = 0
+        self.__complete = False
+        self.__scramble()
+
+        return True
+
     def get_moves(self):
         """Return the number of player moves."""
         return self.__moves

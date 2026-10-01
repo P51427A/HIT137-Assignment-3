@@ -76,3 +76,4 @@ class Tile:
         """Restore the tile to its original position and orientation."""
         self.__current_image = self.__original_image.copy()
         self.__current_position = self.__correct_position
+        
